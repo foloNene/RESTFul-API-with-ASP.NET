@@ -9,7 +9,7 @@ namespace CourseLibraryAPI.Profiles
     {
         public AuthorsProfile()
         {
-            CreateMap<CourseLibraryAPI.Entities.Author, Models.AuthorDto>()
+            CreateMap<Entities.Author, Models.AuthorDto>()
                 .ForMember(
                      dest => dest.Name,
                      opt => opt.MapFrom(src => $"{ src.FirstName} {src.LastName}"))
