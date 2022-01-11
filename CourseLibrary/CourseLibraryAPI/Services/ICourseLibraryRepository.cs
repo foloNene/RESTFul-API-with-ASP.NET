@@ -1,8 +1,8 @@
-﻿using CourseLibrary.API.Entities;
+﻿using CourseLibraryAPI.Entities;
 using System;
 using System.Collections.Generic;
 
-namespace CourseLibrary.API.Services
+namespace CourseLibraryAPI.Services
 {
     public interface ICourseLibraryRepository
     {    

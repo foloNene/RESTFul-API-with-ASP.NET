@@ -2,7 +2,7 @@
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
-namespace CourseLibrary.API.Entities
+namespace CourseLibraryAPI.Entities
 {
     public class Course
     {

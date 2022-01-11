@@ -1,11 +1,11 @@
-﻿using CourseLibrary.API.Services;
+﻿using CourseLibraryAPI.Services;
 using CourseLibraryAPI.Helpers;
 using CourseLibraryAPI.Models;
 using Microsoft.AspNetCore.Mvc;
 using System;
 using System.Collections.Generic;
 
-namespace CourseLibraryAPI.Controllers  
+namespace CourseLibraryAPI.Controllers
 {
     [ApiController]
     [Route("api/authors")]
@@ -19,7 +19,7 @@ namespace CourseLibraryAPI.Controllers
         }
 
         [HttpGet()]
-        public IActionResult GetAuthors()
+        public ActionResult<IEnumerable<AuthorDto>> GetAuthors()
         {
             var authorsFromRepo = _courseLibraryRepository.GetAuthors();
             var authors = new List<AuthorDto>();

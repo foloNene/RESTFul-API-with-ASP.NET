@@ -1,15 +1,15 @@
-using CourseLibrary.API.DbContexts;
-using CourseLibrary.API.Services;
+using AutoMapper;
+using CourseLibraryAPI.Services;
+using CourseLibraryAPI.DbContexts;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
-using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Mvc.Formatters;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using System;
 
-namespace CourseLibrary.API
+namespace CourseLibraryAPI
 {
     public class Startup
     {
@@ -27,7 +27,9 @@ namespace CourseLibrary.API
             {
                 setupAction.ReturnHttpNotAcceptable = true;
                 
-            }).AddXmlDataContractSerializerFormatters();    
+            }).AddXmlDataContractSerializerFormatters();
+
+            services.AddAutoMapper(AppDomain.CurrentDomain.GetAssemblies());
 
             services.AddScoped<ICourseLibraryRepository, CourseLibraryRepository>();
 

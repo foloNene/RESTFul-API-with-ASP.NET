@@ -1,10 +1,10 @@
-﻿using CourseLibrary.API.DbContexts;
-using CourseLibrary.API.Entities; 
+﻿using CourseLibraryAPI.DbContexts;
+using CourseLibraryAPI.Entities; 
 using System;
 using System.Collections.Generic;
 using System.Linq;
 
-namespace CourseLibrary.API.Services
+namespace CourseLibraryAPI.Services
 {
     public class CourseLibraryRepository : ICourseLibraryRepository, IDisposable
     {
