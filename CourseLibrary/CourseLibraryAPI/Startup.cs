@@ -8,6 +8,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using System;
+using Microsoft.AspNetCore.Http;
 
 namespace CourseLibraryAPI
 {
@@ -46,6 +47,19 @@ namespace CourseLibraryAPI
             if (env.IsDevelopment())
             {
                 app.UseDeveloperExceptionPage();
+            }
+            else
+            {
+                app.UseExceptionHandler(applicationBuilder =>
+                {
+                    applicationBuilder.Run(async context =>
+                    {
+                        context.Response.StatusCode = 500;
+                        await context.Response.WriteAsync("An unexpected fault happened, try again.");
+                    });
+                    
+                });
+
             }
 
             app.UseRouting();
