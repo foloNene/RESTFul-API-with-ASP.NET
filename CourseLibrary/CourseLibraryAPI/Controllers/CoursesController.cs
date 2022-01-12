@@ -24,7 +24,8 @@ namespace CourseLibraryAPI.Controllers
                 throw new ArgumentNullException(nameof(Mapper));
         }
 
-        [HttpGet]
+        [HttpGet()]
+        [HttpHead]
         public ActionResult<IEnumerable<CourseDto>> GetCoursesForAuthor(Guid authorId)
         {
             if (!_courseLibraryRepository.AuthorExists(authorId))
