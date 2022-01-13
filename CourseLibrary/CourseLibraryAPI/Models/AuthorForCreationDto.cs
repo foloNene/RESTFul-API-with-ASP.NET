@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 
 namespace CourseLibraryAPI.Models
 {
@@ -8,5 +9,7 @@ namespace CourseLibraryAPI.Models
         public string LastName { get; set; }
         public DateTimeOffset DateOfBirth { get; set; }
         public string MainCategory { get; set; }
+        public ICollection<CourseForCreationDto> Courses { get; set; }
+        = new List<CourseForCreationDto>();
     }
 }
