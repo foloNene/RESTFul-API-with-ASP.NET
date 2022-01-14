@@ -49,14 +49,22 @@ namespace CourseLibraryAPI.Controllers
         [HttpPost]
         public ActionResult<AuthorDto> CreateAuthor(AuthorForCreationDto author)
         {
-            var authorEntity = _mapper.Map<Entities.Author>(author);
-            _courseLibraryRepository.AddAuthor(authorEntity);
-            _courseLibraryRepository.Save();
+            //try
+            //{
+                var authorEntity = _mapper.Map<Entities.Author>(author);
+                _courseLibraryRepository.AddAuthor(authorEntity);
+                _courseLibraryRepository.Save();
 
-            var authorToReturn = _mapper.Map<AuthorDto>(authorEntity);
-            return CreatedAtRoute("GetAuthor",
-                new { authorId = authorToReturn.Id},
-                authorToReturn);
+                var authorToReturn = _mapper.Map<AuthorDto>(authorEntity);
+                return CreatedAtRoute("GetAuthor",
+                    new { authorId = authorToReturn.Id },
+                    authorToReturn);
+            //}
+            //catch (Exception ex)
+            //{
+            //    return Ok();
+            //}
+           
         }
 
         [HttpOptions]

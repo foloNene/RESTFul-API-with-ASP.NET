@@ -55,7 +55,6 @@ namespace CourseLibraryAPI.Controllers
         }
 
         [HttpPost]
-
         public ActionResult<CourseDto> CreateCourseForAuthor(
             Guid authorId, CourseForCreationDto course) 
         {
