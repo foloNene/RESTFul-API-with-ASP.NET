@@ -9,6 +9,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using System;
 using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Mvc;
 
 namespace CourseLibraryAPI
 {
@@ -28,7 +29,29 @@ namespace CourseLibraryAPI
             {
                 setupAction.ReturnHttpNotAcceptable = true;
 
-            }).AddXmlDataContractSerializerFormatters();
+            }).AddXmlDataContractSerializerFormatters()
+              .ConfigureApiBehaviorOptions(setupAction =>
+              {
+                  setupAction.InvalidModelStateResponseFactory = context =>
+                  {
+                      var problemDetails = new ValidationProblemDetails(context.ModelState)
+                      {
+                          Type = "https://courselibrary.com/modelvalidationproblem",
+                          Title = "One or more model validation errors occurred.",
+                          Status = StatusCodes.Status422UnprocessableEntity,
+                          Detail = "See the errors property for details.",
+                          Instance = context.HttpContext.Request.Path
+                      };
+
+                      problemDetails.Extensions.Add("traceId", context.HttpContext.TraceIdentifier);
+
+                      return new UnprocessableEntityObjectResult(problemDetails)
+                      {
+                          ContentTypes = { "application/problem+json" }
+                      };
+                  };
+
+              });
 
             services.AddAutoMapper(AppDomain.CurrentDomain.GetAssemblies());
 
@@ -38,7 +61,7 @@ namespace CourseLibraryAPI
             {
                 options.UseSqlServer(
                     @"Server=(localdb)\mssqllocaldb;Database=CourseLibraryDB;Trusted_Connection=True;");
-            }); 
+            });
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
@@ -50,14 +73,13 @@ namespace CourseLibraryAPI
             }
             else
             {
-                app.UseExceptionHandler(applicationBuilder =>
+                app.UseExceptionHandler(appBuilder =>
                 {
-                    applicationBuilder.Run(async context =>
+                    appBuilder.Run(async context =>
                     {
                         context.Response.StatusCode = 500;
-                        await context.Response.WriteAsync("An unexpected fault happened, try again.");
+                        await context.Response.WriteAsync("An unexpected fault happened. Try again later.");
                     });
-                    
                 });
 
             }
@@ -73,3 +95,4 @@ namespace CourseLibraryAPI
         }
     }
 }
+
