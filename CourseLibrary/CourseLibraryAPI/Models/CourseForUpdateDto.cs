@@ -1,8 +1,13 @@
-﻿namespace CourseLibraryAPI.Models
+﻿using CourseLibraryAPI.ValidationAttributes;
+using System.ComponentModel.DataAnnotations;
+
+namespace CourseLibraryAPI.Models
 {
-    public class CourseForUpdateDto
+   
+    public class CourseForUpdateDto : CourseForManipulationDto
     {
-        public string Title { get; set; }
-        public string Description { get; set; } 
+       [Required(ErrorMessage = "You should fil out a description.")]
+
+       public override string Description { get => base.Description; set => base.Description =value; } 
     }
 }
