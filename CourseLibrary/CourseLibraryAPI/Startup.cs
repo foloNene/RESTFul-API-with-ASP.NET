@@ -10,6 +10,7 @@ using Microsoft.Extensions.Hosting;
 using System;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Newtonsoft.Json.Serialization;
 
 namespace CourseLibraryAPI
 {
@@ -29,7 +30,12 @@ namespace CourseLibraryAPI
             {
                 setupAction.ReturnHttpNotAcceptable = true;
 
-            }).AddXmlDataContractSerializerFormatters()
+            }).AddNewtonsoftJson(setupAction =>
+                {
+                  setupAction.SerializerSettings.ContractResolver =
+                  new CamelCasePropertyNamesContractResolver();
+            })
+              .AddXmlDataContractSerializerFormatters()
               .ConfigureApiBehaviorOptions(setupAction =>
               {
                   setupAction.InvalidModelStateResponseFactory = context =>
