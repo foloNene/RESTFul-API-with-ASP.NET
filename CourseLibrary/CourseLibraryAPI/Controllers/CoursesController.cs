@@ -9,6 +9,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
 using System;
 using System.Collections.Generic;
+using System.Threading.Tasks;
 
 namespace CourseLibraryAPI.Controllers
 {
@@ -31,25 +32,25 @@ namespace CourseLibraryAPI.Controllers
 
         [HttpGet()]
         [HttpHead]
-        public ActionResult<IEnumerable<CourseDto>> GetCoursesForAuthor(Guid authorId)
+        public async Task <ActionResult<IEnumerable<CourseDto>>> GetCoursesForAuthor(Guid authorId)
         {
             if (!_courseLibraryRepository.AuthorExists(authorId))
             {
                 return NotFound();
             }
-            var coursesForAuthorFromRepo = _courseLibraryRepository.GetCourses(authorId);
+            var coursesForAuthorFromRepo = await _courseLibraryRepository.GetCoursesAsync(authorId);
             return Ok(_mapper.Map<IEnumerable<CourseDto>>(coursesForAuthorFromRepo));
         }
 
         [HttpGet("{courseId}", Name = "GetCourseForAuthor")]
-        public ActionResult<CourseDto> GetCourseAuthor(Guid authorId, Guid courseId)
+        public async Task<ActionResult<CourseDto>> GetCourseAuthor(Guid authorId, Guid courseId)
         {
             if (!_courseLibraryRepository.AuthorExists(authorId))
             {
                 return NotFound();
             }
 
-            var courseForAuthorFromRepo = _courseLibraryRepository.GetCourse(authorId, courseId);
+            var courseForAuthorFromRepo = await _courseLibraryRepository.GetCourseAsync(authorId, courseId);
 
             if(courseForAuthorFromRepo == null)
             {
@@ -60,7 +61,7 @@ namespace CourseLibraryAPI.Controllers
         }
 
         [HttpPost]
-        public ActionResult<CourseDto> CreateCourseForAuthor(
+        public async Task <ActionResult<CourseDto>> CreateCourseForAuthor(
             Guid authorId, CourseForCreationDto course) 
         {
             if (!_courseLibraryRepository.AuthorExists(authorId))
@@ -70,7 +71,7 @@ namespace CourseLibraryAPI.Controllers
 
             var courseEntity = _mapper.Map<Entities.Course>(course);
             _courseLibraryRepository.AddCourse(authorId, courseEntity);
-            _courseLibraryRepository.Save();
+             await _courseLibraryRepository.SaveChangesAsync();
 
             var courseToReturn = _mapper.Map<CourseDto>(courseEntity);
             return CreatedAtRoute("GetCourseForAuthor",
@@ -79,7 +80,7 @@ namespace CourseLibraryAPI.Controllers
         }
 
         [HttpPut("{courseId}")]
-        public IActionResult UpdateCourseForAuthor(Guid authorId, 
+        public async Task<IActionResult> UpdateCourseForAuthor(Guid authorId, 
             Guid courseId,
             CourseForUpdateDto course)
         {
@@ -87,7 +88,7 @@ namespace CourseLibraryAPI.Controllers
             {
                 return NotFound();
             }
-            var courseForAuthorFromRepo = _courseLibraryRepository.GetCourse(authorId, courseId);
+            var courseForAuthorFromRepo = await _courseLibraryRepository.GetCourseAsync(authorId, courseId);
 
             if(courseForAuthorFromRepo == null)
             {
@@ -96,7 +97,7 @@ namespace CourseLibraryAPI.Controllers
 
                 _courseLibraryRepository.AddCourse(authorId, courseToAdd);
 
-                _courseLibraryRepository.Save();
+               await _courseLibraryRepository.SaveChangesAsync();
 
                 var courseToReturn = _mapper.Map<CourseDto>(courseToAdd);
 
@@ -112,12 +113,12 @@ namespace CourseLibraryAPI.Controllers
 
             _courseLibraryRepository.UpdateCourse(courseForAuthorFromRepo);
 
-            _courseLibraryRepository.Save();
+             await _courseLibraryRepository.SaveChangesAsync();
             return NoContent();
         }
 
         [HttpPatch("{courseId}")]
-        public ActionResult PartiallyUpdateCourseForAuthor(Guid authorId,
+        public async Task<ActionResult> PartiallyUpdateCourseForAuthor(Guid authorId,
             Guid courseId,
             JsonPatchDocument<CourseForUpdateDto> patchDocument)
         {
@@ -126,7 +127,7 @@ namespace CourseLibraryAPI.Controllers
                 return NotFound();
             }
 
-            var courseForAuthorFromRepo = _courseLibraryRepository.GetCourse(authorId, courseId);
+            var courseForAuthorFromRepo =await _courseLibraryRepository.GetCourseAsync(authorId, courseId);
 
             if(courseForAuthorFromRepo == null)
             {
@@ -141,7 +142,7 @@ namespace CourseLibraryAPI.Controllers
                 courseToAdd.Id = courseId;
 
                 _courseLibraryRepository.AddCourse(authorId, courseToAdd);
-                _courseLibraryRepository.Save();
+               await  _courseLibraryRepository.SaveChangesAsync();
 
                 var courseToReturn = _mapper.Map<CourseDto>(courseToAdd);
 
@@ -156,28 +157,28 @@ namespace CourseLibraryAPI.Controllers
 
             if (!TryValidateModel(courseToPatch))
             {
-                return ValidationProblem(ModelState);
+                 return ValidationProblem(ModelState);
             }
 
             _mapper.Map(courseToPatch, courseForAuthorFromRepo);
 
-            _courseLibraryRepository.UpdateCourse(courseForAuthorFromRepo);
+              _courseLibraryRepository.UpdateCourse(courseForAuthorFromRepo);
 
-            _courseLibraryRepository.Save();
+             await _courseLibraryRepository.SaveChangesAsync();
 
             return NoContent();
 
         }
 
         [HttpDelete("{courseId}")]
-        public ActionResult DeleteCourseForAuthor(Guid authorId, Guid courseId)
+        public async Task<ActionResult> DeleteCourseForAuthor(Guid authorId, Guid courseId)
         {
             if (!_courseLibraryRepository.AuthorExists(authorId))
             {
                 return NotFound();
             }
 
-            var courseForAuthorFromRepo = _courseLibraryRepository.GetCourse(authorId, courseId);
+            var courseForAuthorFromRepo =await  _courseLibraryRepository.GetCourseAsync(authorId, courseId);
 
             if (courseForAuthorFromRepo == null)
             {
@@ -185,7 +186,7 @@ namespace CourseLibraryAPI.Controllers
             }
 
             _courseLibraryRepository.DeleteCourse(courseForAuthorFromRepo);
-            _courseLibraryRepository.Save();
+            await _courseLibraryRepository.SaveChangesAsync();
 
             return NoContent();
         }

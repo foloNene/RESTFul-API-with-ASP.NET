@@ -6,6 +6,7 @@ using Microsoft.AspNetCore.Mvc;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading.Tasks;
 
 namespace CourseLibraryAPI.Controllers
 {
@@ -26,7 +27,8 @@ namespace CourseLibraryAPI.Controllers
         }
 
         [HttpGet("({ids})", Name = "GetAuthorCollection")]
-        public IActionResult GetAuthorCollection(
+
+        public async Task<IActionResult> GetAuthorCollection(
         [FromRoute]
         [ModelBinder(BinderType = typeof(ArrayModelBinder))] IEnumerable<Guid> ids)
         {
@@ -35,7 +37,7 @@ namespace CourseLibraryAPI.Controllers
                 return BadRequest();
             }
 
-            var authorEntities = _courseLibraryRepository.GetAuthors(ids);
+            var authorEntities = await _courseLibraryRepository.GetAuthorsAsync(ids);
 
             if (ids.Count() != authorEntities.Count())
             {
@@ -49,7 +51,7 @@ namespace CourseLibraryAPI.Controllers
 
 
         [HttpPost]
-        public ActionResult<IEnumerable<AuthorDto>> CreateAuthorCollection(
+        public async Task <ActionResult<IEnumerable<AuthorDto>>> CreateAuthorCollection(
             IEnumerable<AuthorForCreationDto> authorCollection)
         {
             var authorEntities = _mapper.Map<IEnumerable<Entities.Author>>(authorCollection);
@@ -58,7 +60,7 @@ namespace CourseLibraryAPI.Controllers
                 _courseLibraryRepository.AddAuthor(author);
             }
 
-            _courseLibraryRepository.Save();
+            await _courseLibraryRepository.SaveChangesAsync();
 
             var authorCollectionToReturn = _mapper.Map<IEnumerable<AuthorDto>>(authorEntities);
             var idsAsString = string.Join(",", authorCollectionToReturn.Select(a => a.Id));
