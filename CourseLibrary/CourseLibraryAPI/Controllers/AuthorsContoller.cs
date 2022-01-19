@@ -50,7 +50,6 @@ namespace CourseLibraryAPI.Controllers
 
         [HttpPost]
 
-        //public async Task<IActionResult<AuthorDTO>> CreateAuthor(AuthorForCreationDto author)
         public async Task<ActionResult<AuthorDto>> CreateAuthor(AuthorForCreationDto author)
         {
            

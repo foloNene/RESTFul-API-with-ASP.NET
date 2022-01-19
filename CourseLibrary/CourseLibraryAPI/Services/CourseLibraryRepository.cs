@@ -111,7 +111,6 @@ namespace CourseLibraryAPI.Services
             _context.Authors.Remove(author);
         }
 
-        // public Author GetAuthor(Guid authorId)
         public async Task <Author> GetAuthorAsync(Guid authorId)
 
         {
