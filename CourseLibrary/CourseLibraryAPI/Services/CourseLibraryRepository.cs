@@ -164,7 +164,7 @@ namespace CourseLibraryAPI.Services
                     collection = collection.OrderBy(a => a.FirstName).ThenBy(a => a.LastName);
                 }
 
-                collection.ApplySort(authorsResourceParameters.OrderBy, mappingDictionary)
+                //collection.ApplySort(authorsResourceParameters.OrderBy, mappingDictionary)
                
             }
 
