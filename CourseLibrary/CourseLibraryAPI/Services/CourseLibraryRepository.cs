@@ -1,5 +1,6 @@
 ﻿using CourseLibraryAPI.DbContexts;
 using CourseLibraryAPI.Entities;
+using CourseLibraryAPI.Helpers;
 using CourseLibraryAPI.ResourceParameters;
 using Microsoft.EntityFrameworkCore;
 using System;
@@ -46,7 +47,7 @@ namespace CourseLibraryAPI.Services
                 throw new ArgumentNullException(nameof(authorId));
             }
 
-            if (courseId == Guid.Empty)
+            if (courseId == Guid.Empty)   
             {
                 throw new ArgumentNullException(nameof(courseId));
             }
@@ -127,21 +128,21 @@ namespace CourseLibraryAPI.Services
             return await _context.Authors.ToListAsync();
         }
 
-        public async Task <IEnumerable<Author>> GetAuthorsAsync(AuthorsResourceParameters authorsResourceParameters)
+        public async Task <PagedList<Author>> GetAuthorsAsync(AuthorsResourceParameters authorsResourceParameters)
         {
             if (authorsResourceParameters == null)
             {
                 throw new ArgumentNullException(nameof(authorsResourceParameters));
             }
 
-            if (string.IsNullOrWhiteSpace(authorsResourceParameters.MainCategory)
-                && string.IsNullOrWhiteSpace(authorsResourceParameters.SearchQuery))
-            {
+            //if (string.IsNullOrWhiteSpace(authorsResourceParameters.MainCategory)
+            //    && string.IsNullOrWhiteSpace(authorsResourceParameters.SearchQuery))
+            //{
 
-                return await _context.Authors.ToListAsync();
-            }
+            //    return await _context.Authors.ToListAsync();
+            //}
 
-            var collection = _context.Authors as IQueryable<Author>;
+            var collection =  _context.Authors as IQueryable<Author>;
              
             if (!string.IsNullOrWhiteSpace(authorsResourceParameters.MainCategory))
             {
@@ -155,7 +156,10 @@ namespace CourseLibraryAPI.Services
                 || a.FirstName.Contains(searchQuery)
                 || a.LastName.Contains(searchQuery));
             }
-            return await collection.ToListAsync();
+            return PagedList<Author>.Create(collection,
+                authorsResourceParameters.PageNumber,
+                authorsResourceParameters.PageSize);
+              
         }
         public async Task<IEnumerable<Author>> GetAuthorsAsync(IEnumerable<Guid> authorIds)
         {

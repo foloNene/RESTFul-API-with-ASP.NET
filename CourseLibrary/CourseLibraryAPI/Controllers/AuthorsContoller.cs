@@ -28,7 +28,7 @@ namespace CourseLibraryAPI.Controllers
         [HttpGet()]
         [HttpHead]
 
-        public async Task <ActionResult<IEnumerable<AuthorDto>>> GetAuthors(
+        public async Task <ActionResult<IEnumerable<AuthorDto>>> GetAuthorsAsync(
           [FromQuery] AuthorsResourceParameters authorsResourceParameters)
         {
             var authorsFromRepo = await _courseLibraryRepository.GetAuthorsAsync(authorsResourceParameters);
