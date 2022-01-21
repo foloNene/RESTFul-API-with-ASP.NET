@@ -8,6 +8,7 @@ using AutoMapper;
 using CourseLibraryAPI.ResourceParameters;
 using System.Threading.Tasks;
 using System.Text.Json;
+using CourseLibraryAPI.Entities;
 
 namespace CourseLibraryAPI.Controllers
 {
@@ -17,13 +18,16 @@ namespace CourseLibraryAPI.Controllers
     {
         private readonly ICourseLibraryRepository _courseLibraryRepository;
         private readonly IMapper _mapper;
+        private readonly IPropertyMappingService _propertyMappingService;
         public AuthorsContoller(ICourseLibraryRepository courseLibraryRepository,
-            IMapper mapper)
+            IMapper mapper, IPropertyMappingService propertyMappingService)
         {
             _courseLibraryRepository = courseLibraryRepository ??
                 throw new ArgumentNullException(nameof(CourseLibraryRepository));
-            _mapper = mapper ??
+            _mapper = mapper ?? 
                 throw new ArgumentNullException(nameof(Mapper));
+            _propertyMappingService = propertyMappingService ??
+                throw new ArgumentNullException(nameof(propertyMappingService));
         }
 
         [HttpGet(Name = "GetAuthors")]
@@ -31,6 +35,12 @@ namespace CourseLibraryAPI.Controllers
         public async Task <ActionResult<IEnumerable<AuthorDto>>> GetAuthorsAsync(
           [FromQuery] AuthorsResourceParameters authorsResourceParameters)
         {
+            if(!_propertyMappingService.ValidMappingExistsFor<AuthorDto, Author>
+                (authorsResourceParameters.OrderBy))
+            {
+                return BadRequest();
+            }
+
             var authorsFromRepo = await _courseLibraryRepository.GetAuthorsAsync(authorsResourceParameters);
 
             var previousPageLink = authorsFromRepo.HasPrevious ?

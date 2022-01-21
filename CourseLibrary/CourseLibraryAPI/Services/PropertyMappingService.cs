@@ -23,6 +23,38 @@ namespace CourseLibraryAPI.Services
         {
             _propertyMappings.Add(new PropertyMapping<AuthorDto, Author>(_authorPropertyMapping));
         }
+
+        public bool ValidMappingExistsFor<TSource, TDestination>(string fields)
+        {
+            var propertyMapping = GetPropertyMapping<TSource, TDestination>();
+
+            if (string.IsNullOrWhiteSpace(fields))
+            {
+                return true;
+            }
+
+            //the string is seperated by " so we split it.
+            var fieldAfterSplit = fields.Split(',');
+
+            //run through the fields clauses
+            foreach(var field in fieldAfterSplit)
+            {
+                //trim
+                var trimmedField = field.Trim();
+
+                var indexOfFristSpace = trimmedField.IndexOf(" ");
+                var propertyName = indexOfFristSpace == -1 ?
+                    trimmedField : trimmedField.Remove(indexOfFristSpace);
+
+                // find the matching property
+                if (!propertyMapping.ContainsKey(propertyName))
+                {
+                    return false;
+                }
+            }
+            return true;
+        }
+
         public Dictionary<string, PropertyMappingValue> GetPropertyMapping
             <TSource, TDestination>()
         {
