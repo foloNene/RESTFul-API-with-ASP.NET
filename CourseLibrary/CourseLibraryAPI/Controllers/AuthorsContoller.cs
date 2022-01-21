@@ -19,8 +19,10 @@ namespace CourseLibraryAPI.Controllers
         private readonly ICourseLibraryRepository _courseLibraryRepository;
         private readonly IMapper _mapper;
         private readonly IPropertyMappingService _propertyMappingService;
+        private readonly IPropertyCheckerService _propertyCheckerService;
         public AuthorsContoller(ICourseLibraryRepository courseLibraryRepository,
-            IMapper mapper, IPropertyMappingService propertyMappingService)
+            IMapper mapper, IPropertyMappingService propertyMappingService,
+            IPropertyCheckerService propertyCheckerService)
         {
             _courseLibraryRepository = courseLibraryRepository ??
                 throw new ArgumentNullException(nameof(CourseLibraryRepository));
@@ -28,6 +30,8 @@ namespace CourseLibraryAPI.Controllers
                 throw new ArgumentNullException(nameof(Mapper));
             _propertyMappingService = propertyMappingService ??
                 throw new ArgumentNullException(nameof(propertyMappingService));
+            _propertyCheckerService = propertyCheckerService ??
+                throw new ArgumentNullException(nameof(propertyCheckerService));
         }
 
         [HttpGet(Name = "GetAuthors")]
@@ -37,6 +41,12 @@ namespace CourseLibraryAPI.Controllers
         {
             if(!_propertyMappingService.ValidMappingExistsFor<AuthorDto, Author>
                 (authorsResourceParameters.OrderBy))
+            {
+                return BadRequest();
+            }
+
+            if(!_propertyCheckerService.TypeHasProperties<AuthorDto>
+                (authorsResourceParameters.Fields))
             {
                 return BadRequest();
             }
@@ -70,6 +80,12 @@ namespace CourseLibraryAPI.Controllers
         [HttpGet("{authorId}", Name ="GetAuthor")]
         public async Task<IActionResult> GetAutor(Guid authorId, string fields)
         {
+            if(!_propertyCheckerService.TypeHasProperties<AuthorDto>
+                (fields))
+            {
+                return BadRequest();
+            }
+
             var authorFromRepo = await _courseLibraryRepository.GetAuthorAsync(authorId);
 
             if (authorFromRepo == null)

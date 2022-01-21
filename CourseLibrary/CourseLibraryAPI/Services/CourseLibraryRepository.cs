@@ -164,7 +164,7 @@ namespace CourseLibraryAPI.Services
 
                 //get property mapping dictionary
                 var authorPropertyMappingDictionary =
-                    _propertyMappingService.GetPropertyMapping<Models.  AuthorDto, Author>();
+                   _propertyMappingService.GetPropertyMapping<Models.  AuthorDto, Author>();
 
                 collection = collection.ApplySort(authorsResourceParameters.OrderBy,
                     authorPropertyMappingDictionary);
