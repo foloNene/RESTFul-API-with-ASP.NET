@@ -68,7 +68,7 @@ namespace CourseLibraryAPI.Controllers
         }
 
         [HttpGet("{authorId}", Name ="GetAuthor")]
-        public async Task<IActionResult> GetAutor(Guid authorId)
+        public async Task<IActionResult> GetAutor(Guid authorId, string fields)
         {
             var authorFromRepo = await _courseLibraryRepository.GetAuthorAsync(authorId);
 
@@ -77,7 +77,7 @@ namespace CourseLibraryAPI.Controllers
                 return NotFound();  
             }
            
-            return Ok(_mapper.Map<AuthorDto>(authorFromRepo));
+            return Ok(_mapper.Map<AuthorDto>(authorFromRepo).ShapeData(fields));
         }
 
         [HttpPost]
