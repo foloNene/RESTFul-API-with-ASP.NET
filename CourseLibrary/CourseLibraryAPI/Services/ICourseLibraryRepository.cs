@@ -1,4 +1,5 @@
 ﻿using CourseLibraryAPI.Entities;
+using CourseLibraryAPI.Helpers;
 using CourseLibraryAPI.ResourceParameters;
 using System;
 using System.Collections.Generic;
@@ -15,8 +16,8 @@ namespace CourseLibraryAPI.Services
         void DeleteCourse(Course course);
         //IEnumerable<Author> GetAuthors();
         Task<IEnumerable<Author>>GetAuthorsAsync();
-        Task<IEnumerable<Author>> GetAuthorsAsync(AuthorsResourceParameters authorsResourceParameters);
-        //IEnumerable<Author> GetAuthors(AuthorsResourceParameters authorsResourceParameters);
+        Task<PagedList<Author>> GetAuthorsAsync(AuthorsResourceParameters authorsResourceParameters);
+        //PagedList<Author> GetAuthors(AuthorsResourceParameters authorsResourceParameters);
         Task<Author>GetAuthorAsync(Guid authorId);
         Task<IEnumerable<Author>>GetAuthorsAsync(IEnumerable<Guid> authorIds);
         void AddAuthor(Author author);
@@ -25,6 +26,6 @@ namespace CourseLibraryAPI.Services
         bool AuthorExists(Guid authorId);
 
         Task<bool> SaveChangesAsync();
-        //Task<bool> Save();
+        
     }
 }
