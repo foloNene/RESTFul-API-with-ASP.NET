@@ -109,18 +109,24 @@ namespace CourseLibraryAPI.Controllers
 
         public async Task<ActionResult<AuthorDto>> CreateAuthor(AuthorForCreationDto author)
         {
-           
                 var authorEntity = _mapper.Map<Entities.Author>(author);
                 _courseLibraryRepository.AddAuthor(authorEntity);
                 
                  await _courseLibraryRepository.SaveChangesAsync();
 
                 var authorToReturn = _mapper.Map<AuthorDto>(authorEntity);
+
+            var links = CreateLinksForAuthor(authorToReturn.Id, null);
+
+            var linkedResourceToReturn = authorToReturn.ShapeData(null)
+                as IDictionary<string, object>;
+            linkedResourceToReturn.Add("links", links);
+
                 return CreatedAtRoute("GetAuthor",
-                    new { authorId = authorToReturn.Id },
+                    new { authorId = linkedResourceToReturn["Id"]},
                     authorToReturn);
-           
         }
+
 
         [HttpOptions]
         public IActionResult GetAuthorsOptions()
