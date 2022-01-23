@@ -118,8 +118,7 @@ namespace CourseLibraryAPI.Controllers
 
         }
 
-        [HttpPost]
-
+        [HttpPost (Name = "CreateAuthor")]
         public async Task<ActionResult<AuthorDto>> CreateAuthor(AuthorForCreationDto author)
         {
                 var authorEntity = _mapper.Map<Entities.Author>(author);
@@ -137,7 +136,7 @@ namespace CourseLibraryAPI.Controllers
 
                 return CreatedAtRoute("GetAuthor",
                     new { authorId = linkedResourceToReturn["Id"]},
-                    authorToReturn);
+                    linkedResourceToReturn);
         }
 
 
@@ -193,6 +192,7 @@ namespace CourseLibraryAPI.Controllers
                            mainCategory = authorsResourceParameters.MainCategory,
                            searchQuery = authorsResourceParameters.SearchQuery
                        });
+                case ResourceUriType.Current:
                 default: 
                     return Url.Link("GetAuthors",
                         new
