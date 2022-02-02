@@ -10,6 +10,7 @@ using System.Threading.Tasks;
 using System.Text.Json;
 using CourseLibraryAPI.Entities;
 using System.Linq;
+using Microsoft.Net.Http.Headers;
 
 namespace CourseLibraryAPI.Controllers
 {
@@ -78,7 +79,7 @@ namespace CourseLibraryAPI.Controllers
                 var authorAsDictionary = author as IDictionary<string, object>;
                 var authorLinks = CreateLinksForAuthor((Guid)authorAsDictionary["Id"], null);
                 authorAsDictionary.Add("links", authorLinks);
-                return authorAsDictionary;
+                return authorAsDictionary;  
             });
 
             var linkedCollectionResource = new
@@ -88,11 +89,17 @@ namespace CourseLibraryAPI.Controllers
             };
 
             return Ok(linkedCollectionResource);
-        }
+        }  
 
         [HttpGet("{authorId}", Name ="GetAuthor")]
-        public async Task<IActionResult> GetAutor(Guid authorId, string fields)
+        public async Task<IActionResult> GetAutor(Guid authorId, string fields,
+            [FromHeader(Name = "Accept")] string mediaType)
         {
+            if(!MediaTypeHeaderValue.TryParse(mediaType,
+                out MediaTypeHeaderValue parseMediaType))
+            {
+                return BadRequest();
+            }
             if(!_propertyCheckerService.TypeHasProperties<AuthorDto>
                 (fields))
             {
@@ -106,27 +113,30 @@ namespace CourseLibraryAPI.Controllers
                 return NotFound();  
             }
 
-            var links = CreateLinksForAuthor(authorId, fields);
+            if(parseMediaType.MediaType == "application/vnd.marvin.hateoas+json")
+            {
+                var links = CreateLinksForAuthor(authorId, fields);
 
-            var linkedResourceToReturn =
-                _mapper.Map<AuthorDto>(authorFromRepo).ShapeData(fields)
-                as IDictionary<string, object>;
+                var linkedResourceToReturn =
+                    _mapper.Map<AuthorDto>(authorFromRepo).ShapeData(fields)
+                    as IDictionary<string, object>;
 
-            linkedResourceToReturn.Add("links", links);
+                linkedResourceToReturn.Add("links", links);
 
-            return Ok(linkedResourceToReturn);
+                return Ok(linkedResourceToReturn);
+            }
 
+            return Ok(_mapper.Map<AuthorDto>(authorFromRepo).ShapeData(fields));
         }
 
         [HttpPost (Name = "CreateAuthor")]
         public async Task<ActionResult<AuthorDto>> CreateAuthor(AuthorForCreationDto author)
         {
-                var authorEntity = _mapper.Map<Entities.Author>(author);
-                _courseLibraryRepository.AddAuthor(authorEntity);
-                
-                 await _courseLibraryRepository.SaveChangesAsync();
+            var authorEntity = _mapper.Map<Entities.Author>(author);
+             _courseLibraryRepository.AddAuthor(authorEntity);
+            await _courseLibraryRepository.SaveChangesAsync();
 
-                var authorToReturn = _mapper.Map<AuthorDto>(authorEntity);
+           var authorToReturn = _mapper.Map<AuthorDto>(authorEntity);
 
             var links = CreateLinksForAuthor(authorToReturn.Id, null);
 
