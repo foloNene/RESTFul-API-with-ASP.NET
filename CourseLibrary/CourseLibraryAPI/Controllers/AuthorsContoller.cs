@@ -92,16 +92,17 @@ namespace CourseLibraryAPI.Controllers
         }  
 
         [HttpGet("{authorId}", Name ="GetAuthor")]
-        public async Task<IActionResult> GetAutor(Guid authorId, string fields,
+        public async Task<IActionResult> GetAuthorAsync(Guid authorId, string fields,
             [FromHeader(Name = "Accept")] string mediaType)
         {
-            if(!MediaTypeHeaderValue.TryParse(mediaType,
-                out MediaTypeHeaderValue parseMediaType))
+            if (!MediaTypeHeaderValue.TryParse(mediaType,
+                out MediaTypeHeaderValue parsedMediaType))
             {
                 return BadRequest();
             }
-            if(!_propertyCheckerService.TypeHasProperties<AuthorDto>
-                (fields))
+
+            if (!_propertyCheckerService.TypeHasProperties<AuthorDto>
+               (fields))
             {
                 return BadRequest();
             }
@@ -110,23 +111,50 @@ namespace CourseLibraryAPI.Controllers
 
             if (authorFromRepo == null)
             {
-                return NotFound();  
+                return NotFound();
             }
 
-            if(parseMediaType.MediaType == "application/vnd.marvin.hateoas+json")
+            var includeLinks = parsedMediaType.SubTypeWithoutSuffix
+               .EndsWith("hateoas", StringComparison.InvariantCultureIgnoreCase);
+
+            IEnumerable<LinkDto> links = new List<LinkDto>();
+
+            if (includeLinks)
             {
-                var links = CreateLinksForAuthor(authorId, fields);
-
-                var linkedResourceToReturn =
-                    _mapper.Map<AuthorDto>(authorFromRepo).ShapeData(fields)
-                    as IDictionary<string, object>;
-
-                linkedResourceToReturn.Add("links", links);
-
-                return Ok(linkedResourceToReturn);
+                links = CreateLinksForAuthor(authorId, fields);
             }
 
-            return Ok(_mapper.Map<AuthorDto>(authorFromRepo).ShapeData(fields));
+            var primaryMediaType = includeLinks ?
+                parsedMediaType.SubTypeWithoutSuffix
+                .Substring(0, parsedMediaType.SubTypeWithoutSuffix.Length - 8)
+                : parsedMediaType.SubTypeWithoutSuffix;
+
+            // full author
+            if (primaryMediaType == "vnd.marvin.author.full")
+            {
+                var fullResourceToReturn = _mapper.Map<AuthorFullDto>(authorFromRepo)
+                    .ShapeData(fields) as IDictionary<string, object>;
+
+                if (includeLinks)
+                {
+                    fullResourceToReturn.Add("links", links);
+                }
+
+                return Ok(fullResourceToReturn);
+            }
+
+            // friendly author
+            var friendlyResourceToReturn = _mapper.Map<AuthorDto>(authorFromRepo)
+                .ShapeData(fields) as IDictionary<string, object>;
+
+            if (includeLinks)
+            {
+                friendlyResourceToReturn.Add("links", links);
+            }
+
+            return Ok(friendlyResourceToReturn);
+
+
         }
 
         [HttpPost (Name = "CreateAuthor")]
