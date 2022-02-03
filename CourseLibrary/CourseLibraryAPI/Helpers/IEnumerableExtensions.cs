@@ -24,7 +24,7 @@ namespace CourseLibraryAPI.Helpers
             // type of the object(TSource), not on the instance
             var propertyInfoList = new List<PropertyInfo>();
 
-            if (string.IsNullOrWhiteSpace(fields))
+            if (string.IsNullOrWhiteSpace(fields)) 
             {
                 // all public properties should be in the ExpandoObject
                 var propertyInfos = typeof(TSource)

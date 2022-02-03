@@ -157,12 +157,7 @@ namespace CourseLibraryAPI.Services
 
             if (!string.IsNullOrWhiteSpace(authorsResourceParameters.OrderBy))
             {
-                //if(authorsResourceParameters.OrderBy.ToLowerInvariant() == "name")
-                //{
-                //    collection = collection.OrderBy(a => a.FirstName).ThenBy(a => a.LastName);
-                //}
-
-                //get property mapping dictionary
+                //get properly mapping dictionary
                 var authorPropertyMappingDictionary =
                    _propertyMappingService.GetPropertyMapping<Models.  AuthorDto, Author>();
 

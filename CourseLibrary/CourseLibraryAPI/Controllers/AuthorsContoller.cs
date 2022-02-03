@@ -10,6 +10,8 @@ using System.Threading.Tasks;
 using System.Text.Json;
 using CourseLibraryAPI.Entities;
 using System.Linq;
+using Microsoft.Net.Http.Headers;
+using CourseLibraryAPI.ActionConstraints;
 
 namespace CourseLibraryAPI.Controllers
 {
@@ -78,7 +80,7 @@ namespace CourseLibraryAPI.Controllers
                 var authorAsDictionary = author as IDictionary<string, object>;
                 var authorLinks = CreateLinksForAuthor((Guid)authorAsDictionary["Id"], null);
                 authorAsDictionary.Add("links", authorLinks);
-                return authorAsDictionary;
+                return authorAsDictionary;  
             });
 
             var linkedCollectionResource = new
@@ -90,11 +92,24 @@ namespace CourseLibraryAPI.Controllers
             return Ok(linkedCollectionResource);
         }
 
+        [Produces("application/json",
+            "application/vnd.marvin.hateoas+json",
+            "application/vnd.marvin.author.full+json",
+            "application/vnd.marvin.author.full.hateoas+json",
+            "application/vnd.marvin.author.friendly+json",
+            "application/vnd.marvin.author.friendly.hateoas+json")]
         [HttpGet("{authorId}", Name ="GetAuthor")]
-        public async Task<IActionResult> GetAutor(Guid authorId, string fields)
+        public async Task<IActionResult> GetAuthorAsync(Guid authorId, string fields,
+            [FromHeader(Name = "Accept")] string mediaType)
         {
-            if(!_propertyCheckerService.TypeHasProperties<AuthorDto>
-                (fields))
+            if (!MediaTypeHeaderValue.TryParse(mediaType,
+                out MediaTypeHeaderValue parsedMediaType))
+            {
+                return BadRequest();
+            }
+
+            if (!_propertyCheckerService.TypeHasProperties<AuthorDto>
+               (fields))
             {
                 return BadRequest();
             }
@@ -103,30 +118,87 @@ namespace CourseLibraryAPI.Controllers
 
             if (authorFromRepo == null)
             {
-                return NotFound();  
+                return NotFound();
             }
 
-            var links = CreateLinksForAuthor(authorId, fields);
+            var includeLinks = parsedMediaType.SubTypeWithoutSuffix
+               .EndsWith("hateoas", StringComparison.InvariantCultureIgnoreCase);
 
-            var linkedResourceToReturn =
-                _mapper.Map<AuthorDto>(authorFromRepo).ShapeData(fields)
-                as IDictionary<string, object>;
+            IEnumerable<LinkDto> links = new List<LinkDto>();
 
-            linkedResourceToReturn.Add("links", links);
+            if (includeLinks)
+            {
+                links = CreateLinksForAuthor(authorId, fields);
+            }
 
-            return Ok(linkedResourceToReturn);
+            var primaryMediaType = includeLinks ?
+                parsedMediaType.SubTypeWithoutSuffix
+                .Substring(0, parsedMediaType.SubTypeWithoutSuffix.Length - 8)
+                : parsedMediaType.SubTypeWithoutSuffix;
+
+            // full author
+            if (primaryMediaType == "vnd.marvin.author.full")
+            {
+                var fullResourceToReturn = _mapper.Map<AuthorFullDto>(authorFromRepo)
+                    .ShapeData(fields) as IDictionary<string, object>;
+
+                if (includeLinks)
+                {
+                    fullResourceToReturn.Add("links", links);
+                }
+
+                return Ok(fullResourceToReturn);
+            }
+
+            // friendly author
+            var friendlyResourceToReturn = _mapper.Map<AuthorDto>(authorFromRepo)
+                .ShapeData(fields) as IDictionary<string, object>;
+
+            if (includeLinks)
+            {
+                friendlyResourceToReturn.Add("links", links);
+            }
+
+            return Ok(friendlyResourceToReturn);
+
 
         }
 
+        [HttpPost(Name = "CreateAuthorAuthorWithDateOfDeath")]
+        [RequestHeaderMatchesMediaType("Content-type",
+           "application/json",
+           "application/vnd.marvin.authorforcreationWithdateofdeath+json")]
+        [Consumes("application/vmd.marvin.authorforcreationwithdateofdeath+json")]
+        public async Task<ActionResult<AuthorDto>> CreateAuthorWithDateOfDeath(AuthorForCreationDto author)
+        {
+            var authorEntity = _mapper.Map<Entities.Author>(author);
+            _courseLibraryRepository.AddAuthor(authorEntity);
+            await _courseLibraryRepository.SaveChangesAsync();
+
+            var authorToReturn = _mapper.Map<AuthorDto>(authorEntity);
+
+            var links = CreateLinksForAuthor(authorToReturn.Id, null);
+
+            var linkedResourceToReturn = authorToReturn.ShapeData(null)
+                as IDictionary<string, object>;
+            linkedResourceToReturn.Add("links", links);
+
+            return CreatedAtRoute("GetAuthor",
+                new { authorId = linkedResourceToReturn["Id"] },
+                linkedResourceToReturn);
+        }
+
         [HttpPost (Name = "CreateAuthor")]
+        [RequestHeaderMatchesMediaType("Content-type",
+            "application/json",
+            "application/vnd.marvin.authorforcreation+json")]
         public async Task<ActionResult<AuthorDto>> CreateAuthor(AuthorForCreationDto author)
         {
-                var authorEntity = _mapper.Map<Entities.Author>(author);
-                _courseLibraryRepository.AddAuthor(authorEntity);
-                
-                 await _courseLibraryRepository.SaveChangesAsync();
+            var authorEntity = _mapper.Map<Entities.Author>(author);
+             _courseLibraryRepository.AddAuthor(authorEntity);
+            await _courseLibraryRepository.SaveChangesAsync();
 
-                var authorToReturn = _mapper.Map<AuthorDto>(authorEntity);
+           var authorToReturn = _mapper.Map<AuthorDto>(authorEntity);
 
             var links = CreateLinksForAuthor(authorToReturn.Id, null);
 
@@ -138,6 +210,8 @@ namespace CourseLibraryAPI.Controllers
                     new { authorId = linkedResourceToReturn["Id"]},
                     linkedResourceToReturn);
         }
+
+       
 
 
         [HttpOptions]

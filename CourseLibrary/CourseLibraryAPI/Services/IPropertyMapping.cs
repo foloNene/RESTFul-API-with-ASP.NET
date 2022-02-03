@@ -1,6 +1,6 @@
 ﻿namespace CourseLibraryAPI.Services
 {
-    public class IPropertyMapping
+    public interface IPropertyMapping
     {
     }
 }
