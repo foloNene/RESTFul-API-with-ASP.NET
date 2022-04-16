@@ -17,6 +17,8 @@ namespace CourseLibraryAPI.Entities
         [MaxLength(50)]
         public string LastName { get; set; }
 
+        public DateTimeOffset? DateOfDeath { get; set; }
+
         [Required]
         public DateTimeOffset DateOfBirth { get; set; }          
 

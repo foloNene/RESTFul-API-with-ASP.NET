@@ -10,6 +10,9 @@ using Microsoft.Extensions.Hosting;
 using System;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Newtonsoft.Json.Serialization;
+using Microsoft.AspNetCore.Mvc.Formatters;
+using System.Linq;
 
 namespace CourseLibraryAPI
 {
@@ -25,11 +28,34 @@ namespace CourseLibraryAPI
         // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
         {
+            services.AddHttpCacheHeaders((expirationModelOptions) =>
+            {
+                expirationModelOptions.MaxAge = 60;
+                expirationModelOptions.CacheLocation = Marvin.Cache.Headers.CacheLocation.Private;
+            },
+            (validationModelOptions) =>
+            {
+                validationModelOptions.MustRevalidate = true;
+            });
+
+
+            services.AddResponseCaching();
+
             services.AddControllers(setupAction =>
             {
                 setupAction.ReturnHttpNotAcceptable = true;
+                setupAction.CacheProfiles.Add("240SecondsCacheProfile",
+                                                new CacheProfile()
+                                                {
+                                                    Duration = 240
+                                                });
 
-            }).AddXmlDataContractSerializerFormatters()
+            }).AddNewtonsoftJson(setupAction =>
+                {
+                  setupAction.SerializerSettings.ContractResolver =
+                  new CamelCasePropertyNamesContractResolver();
+            })
+              .AddXmlDataContractSerializerFormatters() 
               .ConfigureApiBehaviorOptions(setupAction =>
               {
                   setupAction.InvalidModelStateResponseFactory = context =>
@@ -52,6 +78,24 @@ namespace CourseLibraryAPI
                   };
 
               });
+
+            services.Configure<MvcOptions>(config =>
+            {
+                var newtonsoftJsonOutputFormatter = config.OutputFormatters
+                      .OfType<NewtonsoftJsonOutputFormatter>()?.FirstOrDefault();
+
+                if (newtonsoftJsonOutputFormatter != null)
+                {
+                    newtonsoftJsonOutputFormatter.SupportedMediaTypes.Add("application/vnd.marvin.hateoas+json");
+                }
+            });
+
+                // Register PropertyMappingService
+                services.AddTransient<IPropertyMappingService, PropertyMappingService>();
+
+            //Register PropertyCheckerService
+            services.AddTransient<IPropertyCheckerService, PropertyCheckerService>();
+            
 
             services.AddAutoMapper(AppDomain.CurrentDomain.GetAssemblies());
 
@@ -83,6 +127,10 @@ namespace CourseLibraryAPI
                 });
 
             }
+
+            //app.UseResponseCaching();
+
+            app.UseHttpCacheHeaders();
 
             app.UseRouting();
 

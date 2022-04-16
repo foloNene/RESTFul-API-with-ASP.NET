@@ -1,19 +1,27 @@
 ﻿using CourseLibraryAPI.DbContexts;
 using CourseLibraryAPI.Entities;
+using CourseLibraryAPI.Helpers;
+using CourseLibraryAPI.Models;
 using CourseLibraryAPI.ResourceParameters;
+using Microsoft.EntityFrameworkCore;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading.Tasks;
 
 namespace CourseLibraryAPI.Services
 {
     public class CourseLibraryRepository : ICourseLibraryRepository, IDisposable
     {
         private readonly CourseLibraryContext _context;
+        private readonly IPropertyMappingService _propertyMappingService;
 
-        public CourseLibraryRepository(CourseLibraryContext context )
+        public CourseLibraryRepository(CourseLibraryContext context, 
+            IPropertyMappingService propertyMappingService)
         {
             _context = context ?? throw new ArgumentNullException(nameof(context));
+            _propertyMappingService = propertyMappingService ??
+                   throw new ArgumentNullException(nameof(propertyMappingService));
         }
 
         public void AddCourse(Guid authorId, Course course)
@@ -37,38 +45,39 @@ namespace CourseLibraryAPI.Services
             _context.Courses.Remove(course);
         }
   
-        public Course GetCourse(Guid authorId, Guid courseId)
+        public async Task<Course> GetCourseAsync(Guid authorId, Guid courseId)
         {
             if (authorId == Guid.Empty)
             {
                 throw new ArgumentNullException(nameof(authorId));
             }
 
-            if (courseId == Guid.Empty)
+            if (courseId == Guid.Empty)   
             {
                 throw new ArgumentNullException(nameof(courseId));
             }
 
-            return _context.Courses
-              .Where(c => c.AuthorId == authorId && c.Id == courseId).FirstOrDefault();
+            return await _context.Courses
+              .Where(c => c.AuthorId == authorId && c.Id == courseId).FirstOrDefaultAsync();
         }
 
-        public IEnumerable<Course> GetCourses(Guid authorId)
+        public async Task <IEnumerable<Course>> GetCoursesAsync(Guid authorId)
         {  
             if (authorId == Guid.Empty)
             {
                 throw new ArgumentNullException(nameof(authorId));
             }
 
-            return _context.Courses
+            return await _context.Courses
                         .Where(c => c.AuthorId == authorId)
-                        .OrderBy(c => c.Title).ToList();
+                        .OrderBy(c => c.Title).ToListAsync();
         }
 
         public void UpdateCourse(Course course)
         {
             // no code in this implementation
         }
+
 
         public void AddAuthor(Author author)
         {
@@ -107,37 +116,32 @@ namespace CourseLibraryAPI.Services
 
             _context.Authors.Remove(author);
         }
-        
-        public Author GetAuthor(Guid authorId)
+
+        public async Task <Author> GetAuthorAsync(Guid authorId)
+
         {
             if (authorId == Guid.Empty)
             {
                 throw new ArgumentNullException(nameof(authorId));
             }
 
-            return _context.Authors.FirstOrDefault(a => a.Id == authorId);
+            return await _context.Authors.FirstOrDefaultAsync(a => a.Id == authorId);
         }
 
-        public IEnumerable<Author> GetAuthors()
+        public async Task<IEnumerable<Author>> GetAuthorsAsync()
         {
-            return _context.Authors.ToList<Author>();
+            return await _context.Authors.ToListAsync();
         }
 
-        public IEnumerable<Author> GetAuthors(AuthorsResourceParameters authorsResourceParameters)
+        public async Task <PagedList<Author>> GetAuthorsAsync(AuthorsResourceParameters authorsResourceParameters)
         {
             if (authorsResourceParameters == null)
             {
                 throw new ArgumentNullException(nameof(authorsResourceParameters));
             }
 
-            if (string.IsNullOrWhiteSpace(authorsResourceParameters.MainCategory)
-                && string.IsNullOrWhiteSpace(authorsResourceParameters.SearchQuery))
-            {
-                return GetAuthors();
-            }
-
-            var collection = _context.Authors as IQueryable<Author>;
-
+            var collection =  _context.Authors as IQueryable<Author>;
+             
             if (!string.IsNullOrWhiteSpace(authorsResourceParameters.MainCategory))
             {
                 var mainCategory = authorsResourceParameters.MainCategory.Trim();
@@ -150,20 +154,34 @@ namespace CourseLibraryAPI.Services
                 || a.FirstName.Contains(searchQuery)
                 || a.LastName.Contains(searchQuery));
             }
-            return collection.ToList();
+
+            if (!string.IsNullOrWhiteSpace(authorsResourceParameters.OrderBy))
+            {
+                //get properly mapping dictionary
+                var authorPropertyMappingDictionary =
+                   _propertyMappingService.GetPropertyMapping<Models.  AuthorDto, Author>();
+
+                collection = collection.ApplySort(authorsResourceParameters.OrderBy,
+                    authorPropertyMappingDictionary);
+               
+            }
+
+            return PagedList<Author>.Create(collection,
+                authorsResourceParameters.PageNumber,
+                authorsResourceParameters.PageSize);
+              
         }
-         
-        public IEnumerable<Author> GetAuthors(IEnumerable<Guid> authorIds)
+        public async Task<IEnumerable<Author>> GetAuthorsAsync(IEnumerable<Guid> authorIds)
         {
             if (authorIds == null)
             {
                 throw new ArgumentNullException(nameof(authorIds));
             }
 
-            return _context.Authors.Where(a => authorIds.Contains(a.Id))
+            return await _context.Authors.Where(a => authorIds.Contains(a.Id))
                 .OrderBy(a => a.FirstName)
                 .OrderBy(a => a.LastName)
-                .ToList();
+                .ToListAsync();
         }
 
         public void UpdateAuthor(Author author)
@@ -171,9 +189,12 @@ namespace CourseLibraryAPI.Services
             // no code in this implementation
         }
 
-        public bool Save()
+        //public bool Save()
+        
+        public async Task<bool> SaveChangesAsync()
         {
-            return (_context.SaveChanges() >= 0);
+            return (await _context.SaveChangesAsync() >=0);  
+            //return (_context.SaveChanges() >= 0);
         }
 
         public void Dispose()
@@ -189,5 +210,7 @@ namespace CourseLibraryAPI.Services
                // dispose resources when needed
             }
         }
+
+        
     }
 }
